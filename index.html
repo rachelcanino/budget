@@ -19,6 +19,8 @@
 html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 -apple-system,system-ui,"Segoe UI",sans-serif}
 header.top{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px}
 header.top h1{font-size:20px;margin:0}
+.hr{display:flex;gap:8px;align-items:center}
+.hbtn{min-height:32px;padding:0 10px;font-size:13px}
 .pill{font-size:13px;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--soft)}
 main{padding:12px 14px calc(84px + env(safe-area-inset-bottom))}
 .tab[hidden]{display:none}
@@ -66,6 +68,10 @@ details.sec[open]>summary::after{content:'−'}
 .rm{min-height:36px;font-size:14px;color:var(--danger);margin-top:8px}
 .ck{display:flex;align-items:center;gap:8px;font-size:14px;min-height:44px}
 .wklbl{text-align:center;font-weight:600}
+.help p,.help li{font-size:14px;color:var(--text)}
+.help ul,.help ol{margin:4px 0;padding-left:20px}
+.help li{margin:4px 0}
+.help .k{font-weight:600}
 nav.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(5,1fr);background:var(--card);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom)}
 nav.tabbar button{border:0;border-radius:0;background:transparent;min-height:56px;font-size:12px;padding:0 2px;color:var(--muted)}
 nav.tabbar button.on{color:var(--accent);font-weight:700}
@@ -73,13 +79,13 @@ nav.tabbar button.on{color:var(--accent);font-weight:700}
 </style>
 </head>
 <body>
-<header class="top"><h1 id="hTitle">Paycheck</h1><span class="pill" id="pill">-</span></header>
+<header class="top"><h1 id="hTitle">Paycheck</h1><div class="hr"><button type="button" class="hbtn" id="helpBtn">Help</button><span class="pill" id="pill">-</span></div></header>
 <main>
 <section class="tab" id="tab-pay">
   <div class="panel">
     <div class="row2">
       <div><span class="t">In your account now ($)</span><input id="cashIn" type="number" step="any" inputmode="decimal"></div>
-      <div><span class="t">Food and household on hand ($)</span><input id="onHandIn" type="number" step="any" inputmode="decimal"></div>
+      <div id="onHandWrap"><span class="t">Food and household on hand ($)</span><input id="onHandIn" type="number" step="any" inputmode="decimal"></div>
     </div>
     <p class="hint" id="upd"></p>
     <p class="hint" id="statusText" style="color:var(--text)"></p>
@@ -110,6 +116,7 @@ nav.tabbar button.on{color:var(--accent);font-weight:700}
     <button type="button" class="primary" id="pAdd" style="width:100%">Add purchase</button>
   </div>
   <div class="panel" id="periodSummary"></div>
+  <div class="panel" id="trackPanel"></div>
   <div class="panel" id="wkList"></div>
   <div class="panel">
     <span class="t">Weeks start on</span>
@@ -125,6 +132,7 @@ nav.tabbar button.on{color:var(--accent);font-weight:700}
 </section>
 
 <section class="tab" id="tab-edit" hidden>
+  <div class="panel"><p class="hint" style="margin:0 0 8px">Not sure what something means?</p><button type="button" id="helpLink" style="width:100%">How this app works</button></div>
   <details class="sec" data-k="spend"><summary>Weekly spending list</summary><div class="secb">
     <p class="hint">Price each time, and how often in weeks (1 = weekly, 2 = every other week, 1.5 = every week and a half). Each paycheck gets two weeks of this list, and the Spend tab uses it as your weekly budget for each category.</p>
     <div id="spendList"></div><button type="button" id="addSpend">+ Add item</button>
@@ -173,6 +181,74 @@ nav.tabbar button.on{color:var(--accent);font-weight:700}
     <p class="hint" id="syncMsg"></p>
   </div></details>
 </section>
+
+<section class="tab help" id="tab-help" hidden>
+  <div class="panel">
+    <h2>How this app works</h2>
+    <p>The app follows your checking account one day at a time, from today through your last listed paycheck. Each paycheck covers the bills and spending until the next one lands.</p>
+    <div class="sub">Every time you open it</div>
+    <ol><li>Enter what's in your account now (Paycheck tab).</li><li>Log any purchases since last time (Spend tab).</li></ol>
+    <p>That's all the plan needs to stay accurate.</p>
+  </div>
+  <div class="panel">
+    <h2>What the numbers mean</h2>
+    <ul>
+      <li><span class="k">Ends with:</span> what you'll have when the next paycheck lands.</li>
+      <li><span class="k">Keep (don't spend):</span> money already needed for something coming up, like the next rent check, school fees, or summer.</li>
+      <li><span class="k">Spare:</span> money nothing upcoming needs, so it's safe to save or use. It stays in your account until you use it, so the same spare shows on later paychecks too. Keep + Spare = Ends with.</li>
+      <li><span class="k">On its own:</span> one paycheck minus its own bills and spending. Rent checks are usually red here, and the paycheck before them covers the difference.</li>
+      <li><span class="k">Lowest point:</span> the least you'll have on any day in that period.</li>
+    </ul>
+  </div>
+  <div class="panel">
+    <h2>Colors</h2>
+    <ul>
+      <li><span class="k pos">Green:</span> you're fine.</li>
+      <li><span class="k warn">Amber:</span> you dip below $0 for one day, and the next paycheck fixes it within your bank's grace window, so there's no fee.</li>
+      <li><span class="k neg">Red:</span> a real shortfall. Something needs to change.</li>
+    </ul>
+    <p>The label at the top right sums up the whole plan, summer included: Covered (green), Covered (amber, a one-day dip), or Short (red).</p>
+  </div>
+  <div class="panel">
+    <h2>The tabs</h2>
+    <ul>
+      <li><span class="k">Paycheck:</span> what to pay from a paycheck, what you can spend, and what to keep. Use the arrows to look at other paychecks. Once a paycheck lands, the card says "This paycheck" and only shows what's still left in that period.</li>
+      <li><span class="k">Plan:</span> every paycheck period at a glance. Tap one for the details.</li>
+      <li><span class="k">Spend:</span> log purchases to see what's left for groceries, household, and treats this week and this paycheck period. The budgets come from your weekly spending list.</li>
+      <li><span class="k">Progress:</span> set a baseline once, then save a check-in on paydays to see whether you're ahead of or behind plan. It also shows loan payoff and goals.</li>
+      <li><span class="k">Edit:</span> change anything: spending list, bills, paydays, goals, and backups.</li>
+    </ul>
+  </div>
+  <div class="panel">
+    <h2>Logging purchases</h2>
+    <p>With "Use my logged purchases in the plan" turned on (Spend tab), the plan only counts what's left of this period's grocery and household allowance. Money you don't spend becomes Spare when the next paycheck lands, or right away if you tap "I'm done shopping until next payday."</p>
+    <p>Log every purchase. If you skip one, Spare will look a little smaller than it really is until the next paycheck. Use "Other" for things that aren't in your spending list.</p>
+  </div>
+  <div class="panel">
+    <h2>On payday</h2>
+    <ol><li>After the paycheck lands, update "In your account now."</li><li>Check the card: pay the bills it lists, and note Keep and Spare.</li><li>Progress → Save today's check-in.</li></ol>
+  </div>
+  <div class="panel">
+    <h2>Common changes (Edit tab)</h2>
+    <ul>
+      <li><span class="k">New monthly bill:</span> Monthly bills → Add bill.</li>
+      <li><span class="k">Stopping a bill or subscription:</span> set its Ends date.</li>
+      <li><span class="k">Money coming in (an advance or a gift):</span> One-time items, with a negative amount.</li>
+      <li><span class="k">Loan paid off early:</span> set its Last date to the last payment you made.</li>
+      <li><span class="k">Paycheck different than expected:</span> Paydays → change the amount.</li>
+    </ul>
+  </div>
+  <div class="panel">
+    <h2>Good to know</h2>
+    <ul>
+      <li>Your numbers live only on this phone. Save a backup to iCloud Drive every couple of weeks (Edit → Backup and sync). Deleting the home screen icon deletes the app's data.</li>
+      <li>The phone and your computer planner don't sync on their own. Move a backup between them when you want them to match.</li>
+      <li>Some amounts are estimates (the bonus, summer checks, health insurance deductions). Update them when you see the real numbers.</li>
+      <li>Bills due today count as not yet paid. Updating your balance in the morning gives the most accurate picture.</li>
+      <li>The last paycheck in the list shows extra Spare because the plan can't see past it. Ignore that row's Spare.</li>
+    </ul>
+  </div>
+</section>
 </main>
 <nav class="tabbar">
   <button type="button" data-tab="pay" class="on">Paycheck</button>
@@ -203,9 +279,9 @@ const CATN={Food:'Groceries and food',Household:'Household',Treat:'Treats',Other
 
 (function(){try{const c=document.createElement('canvas');c.width=c.height=180;const x=c.getContext('2d');x.fillStyle='#3b6d11';x.fillRect(0,0,180,180);x.fillStyle='#ffffff';x.font='bold 116px -apple-system, system-ui, sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('$',90,98);const u=c.toDataURL('image/png');$('touchIcon').href=u;$('favIcon').href=u;}catch(e){}})();
 
-function blank(){return {ver:12,ui:{},cash:0,onHand:0,early:1,grace:true,paydays:[],monthly:[],biweekly:[],once:[],spend:[],goals:[],opp:{principal:0,apr:0,pay:0,extra:0,first:'',apply:false},checkins:[],baseline:null,purchases:[],weekStart:4};}
+function blank(){return {ver:12,ui:{},cash:0,onHand:0,early:1,grace:true,paydays:[],monthly:[],biweekly:[],once:[],spend:[],goals:[],opp:{principal:0,apr:0,pay:0,extra:0,first:'',apply:false},checkins:[],baseline:null,purchases:[],weekStart:4,track:true,doneFor:null};}
 function valid(x){return x&&Array.isArray(x.paydays)&&Array.isArray(x.monthly)&&Array.isArray(x.biweekly)&&Array.isArray(x.once)&&Array.isArray(x.spend)&&Array.isArray(x.goals)&&x.opp;}
-function normalize(o){if(!o.ui)o.ui={};if(!Array.isArray(o.checkins))o.checkins=[];if(o.baseline===undefined)o.baseline=null;if(o.onHand===undefined)o.onHand=0;if(o.grace===undefined)o.grace=true;if(o.early===undefined)o.early=1;if(!Array.isArray(o.purchases))o.purchases=[];if(o.weekStart===undefined)o.weekStart=4;return o;}
+function normalize(o){if(!o.ui)o.ui={};if(!Array.isArray(o.checkins))o.checkins=[];if(o.baseline===undefined)o.baseline=null;if(o.onHand===undefined)o.onHand=0;if(o.grace===undefined)o.grace=true;if(o.early===undefined)o.early=1;if(!Array.isArray(o.purchases))o.purchases=[];if(o.weekStart===undefined)o.weekStart=4;if(o.track===undefined)o.track=true;if(o.doneFor===undefined)o.doneFor=null;return o;}
 let S=null;
 try{S=JSON.parse(localStorage.getItem(KEY));}catch(e){}
 if(!valid(S))S=blank();
@@ -294,18 +370,33 @@ function weekly(){
   S.spend.forEach((r,i)=>{const w=(r.on!==false&&num(r.e)>0)?num(r.p)/num(r.e):0;if(OUT.spend&&OUT.spend[i])OUT.spend[i].textContent=m2(w);t[r.c||'Food']=(t[r.c||'Food']||0)+w;t.all+=w;});
   return t;
 }
+function catSums(s,e){
+  const t={Food:0,Household:0,Treat:0,Other:0};
+  S.purchases.forEach(p=>{const d=P(p.d);if(d&&d>=s&&d<e){const c=t[p.c]!==undefined?p.c:'Other';t[c]+=num(p.a);}});
+  return t;
+}
 
 function compute(){
   const wk=weekly();
-  const t0=today(),early=Math.max(0,Math.round(num(S.early))),grace=S.grace!==false;
-  const pays=S.paydays.map(p=>({d:P(p.d),a:num(p.a)})).filter(p=>p.d).sort((x,y)=>x.d-y.d).map(p=>({d:p.d,a:p.a,dep:addD(p.d,-early)})).filter(p=>p.dep>=t0);
+  const t0=today(),early=Math.max(0,Math.round(num(S.early))),grace=S.grace!==false,track=S.track!==false;
+  const all=S.paydays.map(p=>({d:P(p.d),a:num(p.a)})).filter(p=>p.d).sort((x,y)=>x.d-y.d).map(p=>({d:p.d,a:p.a,dep:addD(p.d,-early)}));
+  const past=all.filter(p=>p.dep<=t0),pays=all.filter(p=>p.dep>t0);
+  const cur=past.length?past[past.length-1]:null,firstFut=pays.length?pays[0].dep:null;
   const st=[];
-  if(pays.length){if(t0<pays[0].dep)st.push({pre:true,s:t0,e:pays[0].dep,a:0});pays.forEach((p,i)=>st.push({pre:false,pd:p.d,s:p.dep,e:i<pays.length-1?pays[i+1].dep:addD(p.dep,14),a:p.a}));}
+  if(cur){const end=firstFut||addD(cur.dep,14);if(end>t0)st.push({cur:true,pd:cur.d,s:t0,e:end,a:0,ps:cur.dep,pa:cur.a});}
+  else if(firstFut&&t0<firstFut)st.push({pre:true,s:t0,e:firstFut,a:0});
+  pays.forEach((p,i)=>st.push({pd:p.d,s:p.dep,e:i<pays.length-1?pays[i+1].dep:addD(p.dep,14),a:p.a}));
   let bal=num(S.cash);const rows=[],dayBals=[];
   st.forEach(x=>{
     const items=itemsBetween(x.s,x.e),days=Math.max(0,dd(x.s,x.e));
-    let food,house,treat,credited=0;
-    if(x.pre){
+    let food,house,treat,credited=0,trk=null;
+    if(x.cur&&track){
+      const done=S.doneFor===ISO(x.ps),logged=catSums(x.ps,addD(t0,1)),allow={Food:wk.Food*2,Household:wk.Household*2,Treat:(wk.Treat||0)*2};
+      food=done?0:Math.max(0,allow.Food-logged.Food);
+      house=done?0:Math.max(0,allow.Household-logged.Household);
+      treat=done?0:Math.max(0,allow.Treat-logged.Treat);
+      trk={allow:allow,logged:logged,done:done};
+    }else if(x.pre||x.cur){
       food=wk.Food/7*days;house=wk.Household/7*days;treat=(wk.Treat||0)/7*days;
       let credit=Math.max(0,num(S.onHand));const c0=credit;
       const cf=Math.min(credit,food);food-=cf;credit-=cf;
@@ -326,7 +417,9 @@ function compute(){
     while(idx<items.length){bal-=items[idx].a;items[idx].after=bal;idx++;}
     if(min===Infinity){min=bal;minD=x.s;}
     const bills=items.reduce((a,i)=>a+i.a,0);
-    rows.push({x:x,items:items,bills:bills,food:food,house:house,treat:treat,sp:sp,own:x.a-bills-sp,carry:carry,startBal:startBal,endBal:bal,min:min,minD:minD,startIdx:startIdx,days:days,credited:credited});
+    let own=x.a-bills-sp;
+    if(x.cur){const fi=itemsBetween(x.ps,x.e);own=x.pa-fi.reduce((a,i)=>a+i.a,0)-wk.all*2;}
+    rows.push({x:x,items:items,bills:bills,food:food,house:house,treat:treat,sp:sp,own:own,carry:carry,startBal:startBal,endBal:bal,min:min,minD:minD,startIdx:startIdx,days:days,credited:credited,trk:trk});
   });
   const cov=dayBals.map((z,j)=>z.b>=-0.005?null:(grace&&j+1<dayBals.length&&dayBals[j+1].b>=-0.005));
   const suf=new Array(dayBals.length);let mm=Infinity;
@@ -354,7 +447,7 @@ function compute(){
 
 function renderUpdated(){
   const u=P(S.updated),el=$('upd');
-  if(!u){el.textContent='Update these each time you open the app so the plan starts from where you are.';el.className='hint warn';return;}
+  if(!u){el.textContent='Update this each time you open the app so the plan starts from where you are.';el.className='hint warn';return;}
   const stale=u<today();
   el.textContent='Last updated '+dname(u)+' '+fd(u)+(stale?'. Update if anything has changed.':'.');
   el.className='hint'+(stale?' warn':'');
@@ -377,29 +470,46 @@ function renderStatus(){
     t.textContent='Every day stays above $0 through '+lastDay+'. Lowest point: '+m2(M.gMin)+' on '+fd(M.gD)+'.';
   }
 }
+function spendLines(r){
+  let h='';const x=r.x;
+  if(r.trk){
+    if(r.trk.done)h+='<div class="line"><span>Marked done shopping</span><span>$0.00</span></div>';
+    else{
+      h+='<div class="line"><span>Groceries left</span><span>'+m2(r.food)+' of '+m2(r.trk.allow.Food)+'</span></div>';
+      h+='<div class="line"><span>Household left</span><span>'+m2(r.house)+' of '+m2(r.trk.allow.Household)+'</span></div>';
+      if(r.trk.allow.Treat>0.005)h+='<div class="line"><span>Treats left</span><span>'+m2(r.treat)+' of '+m2(r.trk.allow.Treat)+'</span></div>';
+    }
+  }else{
+    const sfx=(x.pre||x.cur)&&r.credited>0?' (after what you have)':'';
+    h+='<div class="line"><span>Groceries'+sfx+'</span><span>'+m2(r.food)+'</span></div><div class="line"><span>Household</span><span>'+m2(r.house)+'</span></div>';
+    if(r.treat>0.005)h+='<div class="line"><span>Treats</span><span>'+m2(r.treat)+'</span></div>';
+  }
+  return h;
+}
 function renderCard(){
   const el=$('card'),rows=M.rows;
   const idxs=rows.map((r,i)=>r.x.pre?-1:i).filter(i=>i>=0);
   if(!idxs.length){el.innerHTML='<div class="empty"><div class="big">Welcome</div><p class="hint">To get started, restore the backup from your computer planner.</p><button type="button" class="primary" data-go="sync">Go to Backup and sync</button></div>';CARD_LIST=[];CARD_CUR=null;return;}
   CARD_LIST=idxs.map(i=>ISO(rows[i].x.pd));
   let pos=CARD?CARD_LIST.indexOf(CARD):0;if(pos<0)pos=0;
-  const i=idxs[pos],r=rows[i],x=r.x,isNext=pos===0,pre=(isNext&&i>0&&rows[0].x.pre)?rows[0]:null,nxt=rows[i+1]||null;
+  const i=idxs[pos],r=rows[i],x=r.x,isFirst=pos===0,pre=(isFirst&&i>0&&rows[0].x.pre)?rows[0]:null,nxt=rows[i+1]||null,firstCur=!!rows[idxs[0]].x.cur;
   CARD_CUR=CARD_LIST[pos];
   let h='<div class="nav"><button type="button" data-nav="prev" aria-label="Previous paycheck">‹</button><select id="cSel" aria-label="Choose a paycheck">';
-  idxs.forEach((j,k)=>{h+='<option value="'+CARD_LIST[k]+'"'+(k===pos?' selected':'')+'>'+dname(rows[j].x.pd)+' '+fd(rows[j].x.pd)+(k===0?' (next)':'')+'</option>';});
+  idxs.forEach((j,k)=>{h+='<option value="'+CARD_LIST[k]+'"'+(k===pos?' selected':'')+'>'+dname(rows[j].x.pd)+' '+fd(rows[j].x.pd)+(k===0?(rows[j].x.cur?' (now)':' (next)'):'')+'</option>';});
   h+='</select><button type="button" data-nav="next" aria-label="Next paycheck">›</button></div>';
-  if(!isNext)h+='<button type="button" data-nav="now" style="width:100%;margin-bottom:10px">Back to next paycheck</button>';
-  h+='<div class="ttl"><span>'+(isNext?'Next paycheck':'Paycheck')+' · '+dname(x.pd)+' '+md(x.pd)+'</span><span>'+m2(x.a)+'</span></div>';
-  h+='<p class="hint">'+(dd(x.s,x.pd)>0?'Lands '+dname(x.s)+' '+md(x.s)+' with early deposit. ':'')+'Left over from before: '+m2(r.carry)+'. After it lands: '+m2(r.startBal)+'.</p>';
+  if(!isFirst)h+='<button type="button" data-nav="now" style="width:100%;margin-bottom:10px">Back to '+(firstCur?'this paycheck':'next paycheck')+'</button>';
+  const ttl=x.cur?'This paycheck':(isFirst?'Next paycheck':'Paycheck');
+  h+='<div class="ttl"><span>'+ttl+' · '+dname(x.pd)+' '+md(x.pd)+'</span><span>'+m2(x.cur?x.pa:x.a)+'</span></div>';
+  if(x.cur)h+='<p class="hint">Landed '+dname(x.ps)+' '+md(x.ps)+' and is already in your balance. You have '+m2(r.startBal)+' now.</p>';
+  else h+='<p class="hint">'+(dd(x.s,x.pd)>0?'Lands '+dname(x.s)+' '+md(x.s)+' with early deposit. ':'')+'Left over from before: '+m2(r.carry)+'. After it lands: '+m2(r.startBal)+'.</p>';
   if(pre)h+='<p class="hint">Until then: '+m2(pre.startBal)+' in your account'+(pre.bills>0.005?', with '+m2(pre.bills)+' in bills due first':', nothing due')+(pre.min<-0.005?'. Heads-up: you dip to '+m2(pre.min)+' on '+dname(pre.minD)+' '+md(pre.minD):'')+'.</p>';
-  h+='<div class="sub">Pay from this check (until '+dname(x.e)+' '+md(x.e)+')</div>';
+  h+='<div class="sub">'+(x.cur?'Still to pay this period':'Pay from this check')+' (until '+dname(x.e)+' '+md(x.e)+')</div>';
   if(r.items.length)r.items.forEach(it=>{h+='<div class="line"><span>'+dname(it.d)+' '+md(it.d)+' · '+esc(it.n)+'</span><span>'+m2(it.a)+'</span></div>';});
   else h+='<div class="line"><span>No bills due</span><span></span></div>';
   h+='<div class="line tot"><span>Bills total</span><span>'+m2(r.bills)+'</span></div>';
-  h+='<div class="sub">Spend</div><div class="line"><span>Groceries</span><span>'+m2(r.food)+'</span></div><div class="line"><span>Household</span><span>'+m2(r.house)+'</span></div>';
-  if(r.treat>0.005)h+='<div class="line"><span>Treats</span><span>'+m2(r.treat)+'</span></div>';
+  h+='<div class="sub">'+(x.cur?'Still to spend this period':'Spend')+'</div>'+spendLines(r);
   h+='<div class="sub">What is left</div>';
-  h+='<div class="line"><span>This paycheck on its own</span><span class="'+r.ownCls+'">'+sg(r.own)+'</span></div>';
+  h+='<div class="line"><span>This paycheck on its own'+(x.cur?' (whole period)':'')+'</span><span class="'+r.ownCls+'">'+sg(r.own)+'</span></div>';
   h+='<div class="line"><span>When the next check lands</span><span class="'+r.endCls+'">'+m2(r.endBal)+'</span></div>';
   h+='<div class="line tot"><span>Keep for upcoming bills</span><span>'+m2(r.keep)+'</span></div>';
   h+='<div class="line"><span>Spare: safe to save or use</span><span class="'+(r.spareC>0.005?'pos':'')+'">'+m2(r.spareC)+'</span></div>';
@@ -412,10 +522,13 @@ function renderPlan(){
   let h='';
   rows.forEach((r,i)=>{
     const x=r.x;
-    h+='<details class="pc"'+(open[i]?' open':'')+'><summary><div class="pch"><span>'+(x.pre?'Now':dname(x.pd)+' '+fd(x.pd))+'</span><span>'+(x.pre?'—':m2(x.a))+'</span></div>';
+    const lbl=x.pre?'Now':(x.cur?'Now · '+dname(x.pd)+' '+md(x.pd)+' check':dname(x.pd)+' '+fd(x.pd));
+    const right=x.pre?'—':(x.cur?'In balance':m2(x.a));
+    h+='<details class="pc"'+(open[i]?' open':'')+'><summary><div class="pch"><span>'+lbl+'</span><span>'+right+'</span></div>';
     h+='<div class="chips"><div class="chip"><div class="k">Ends with</div><div class="v '+r.endCls+'">'+m0(r.endBal)+'</div></div><div class="chip"><div class="k">Keep</div><div class="v">'+m0(r.keep)+'</div></div><div class="chip"><div class="k">Spare</div><div class="v '+(r.spareC>0.005?'pos':'')+'">'+m0(r.spareC)+'</div></div></div>';
     h+='<p class="hint" style="margin-bottom:0">On its own <span class="'+r.ownCls+'">'+sg(r.own)+'</span> · Lowest <span class="'+r.minCls+'">'+m2(r.min)+'</span> on '+md(r.minD)+'</p></summary>';
-    if(x.pre)h+='<div class="line"><span>Money in your account now</span><span>'+m2(r.startBal)+'</span></div>';
+    if(x.pre)h+='<div class="line tot"><span>Money in your account now</span><span>'+m2(r.startBal)+'</span></div>';
+    else if(x.cur)h+='<div class="line tot"><span>Money in your account now</span><span>'+m2(r.startBal)+'</span></div><p class="hint">Includes the '+m2(x.pa)+' paycheck that landed '+dname(x.ps)+' '+md(x.ps)+'.</p>';
     else{
       const prev=i>0?rows[i-1]:null;
       h+='<div class="line"><span>Left over from before</span><span class="'+(r.carry<-0.005?((prev&&prev.endCls)||'neg'):'')+'">'+m2(r.carry)+'</span></div>';
@@ -425,8 +538,7 @@ function renderPlan(){
     h+='<div class="sub">Bills</div>';
     if(r.items.length)r.items.forEach(it=>{h+='<div class="line"><span>'+md(it.d)+' · '+esc(it.n)+' '+m2(it.a)+'</span><span class="'+(it.after<-0.005?(r.unc?'neg':'warn'):'')+'">left '+m2(it.after)+'</span></div>';});
     else h+='<div class="line"><span>None</span><span></span></div>';
-    h+='<div class="sub">Spend</div><div class="line"><span>Groceries'+(x.pre&&r.credited>0?' (after what you have)':'')+'</span><span>'+m2(r.food)+'</span></div><div class="line"><span>Household</span><span>'+m2(r.house)+'</span></div>';
-    if(r.treat>0.005)h+='<div class="line"><span>Treats</span><span>'+m2(r.treat)+'</span></div>';
+    h+='<div class="sub">Spend</div>'+spendLines(r);
     h+='<div class="line tot"><span>Ends with</span><span class="'+r.endCls+'">'+m2(r.endBal)+'</span></div><div class="line"><span>Keep (don\'t spend)</span><span>'+m2(r.keep)+'</span></div><div class="line"><span>Spare</span><span class="'+(r.spareC>0.005?'pos':'')+'">'+m2(r.spareC)+'</span></div>';
     if(!x.pre)h+='<div class="btns"><button type="button" data-card="'+ISO(x.pd)+'">Open in Paycheck tab</button></div>';
     h+='</details>';
@@ -440,11 +552,6 @@ function periodFor(d){
   const deps=S.paydays.map(p=>P(p.d)).filter(Boolean).map(x=>addD(x,-early)).sort((a,b)=>a-b);
   let r=null;for(let i=0;i<deps.length;i++){if(deps[i]<=d)r={s:deps[i],e:deps[i+1]||addD(deps[i],14)};}
   return r;
-}
-function catSums(s,e){
-  const t={Food:0,Household:0,Treat:0,Other:0};
-  S.purchases.forEach(p=>{const d=P(p.d);if(d&&d>=s&&d<e){const c=t[p.c]!==undefined?p.c:'Other';t[c]+=num(p.a);}});
-  return t;
 }
 function budgetBlock(b,s){
   let h='',tb=0,ts=0;
@@ -472,6 +579,16 @@ function renderSpend(){
     const pb={Food:wb.Food*2,Household:wb.Household*2,Treat:wb.Treat*2};
     $('periodSummary').innerHTML='<h2>'+(WK===0?'This paycheck period':'Paycheck period')+'</h2><p class="hint">'+dname(per.s)+' '+md(per.s)+' – '+dname(addD(per.e,-1))+' '+md(addD(per.e,-1))+' · two weeks of your spending list</p>'+budgetBlock(pb,catSums(per.s,per.e));
   }else $('periodSummary').innerHTML='<h2>Paycheck period</h2><p class="hint">Add your paydays to see this.</p>';
+  const trackOn=S.track!==false,cr=M.rows.find(r=>r.x.cur);
+  let tp='<h2>Plan connection</h2><label class="ck"><input type="checkbox" id="trackIn"'+(trackOn?' checked':'')+'> Use my logged purchases in the plan</label>';
+  if(trackOn){
+    if(cr&&cr.trk){
+      tp+='<p class="hint" style="color:var(--text)">The plan is counting '+m2(cr.food+cr.house+cr.treat)+' left to spend this period (until '+dname(cr.x.e)+' '+md(cr.x.e)+'). Whatever you don\'t spend becomes Spare when the next paycheck lands.</p>';
+      tp+=cr.trk.done?'<p class="hint pos">Marked done: what was left this period has moved to Spare.</p><div class="btns"><button type="button" data-done="undo">Undo, I still need to shop</button></div>':'<div class="btns"><button type="button" data-done="set">I\'m done shopping until next payday</button></div>';
+    }else tp+='<p class="hint">This starts once your first listed paycheck lands.</p>';
+    tp+='<p class="hint">Log every purchase. If you skip one, Spare will look a little smaller than it really is until the next paycheck.</p>';
+  }else tp+='<p class="hint">Off: the plan assumes you spend your full allowance and uses "Food and household on hand" on the Paycheck tab instead.</p>';
+  $('trackPanel').innerHTML=tp;
   const items=S.purchases.filter(p=>{const d=P(p.d);return d&&d>=ws0&&d<we;}).sort((a,b)=>a.d<b.d?1:(a.d>b.d?-1:0));
   let l='<h2>Purchases '+(WK===0?'this week':'that week')+'</h2>';
   if(!items.length)l+='<p class="hint">Nothing logged yet.</p>';
@@ -562,6 +679,8 @@ function renderOpp(){
 function recalc(){
   M=compute();
   $('spendTotals').textContent='Total '+m2(M.wk.all)+' a week, '+m2(M.wk.all*2)+' per paycheck.';
+  const r0=M.rows[0],showOnHand=!r0||r0.x.pre||(r0.x.cur&&S.track===false);
+  $('onHandWrap').style.display=showOnHand?'':'none';
   renderUpdated();renderStatus();renderCard();renderPlan();renderSpend();renderProgress();renderOpp();persist();
 }
 function renderEdit(){
@@ -573,11 +692,13 @@ function renderEdit(){
 function switchTab(name){
   document.querySelectorAll('.tab').forEach(s=>{s.hidden=s.id!=='tab-'+name;});
   document.querySelectorAll('nav.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.tab===name));
-  $('hTitle').textContent={pay:'Paycheck',plan:'Plan',spend:'Spend',progress:'Progress',edit:'Edit'}[name];
+  $('hTitle').textContent={pay:'Paycheck',plan:'Plan',spend:'Spend',progress:'Progress',edit:'Edit',help:'How it works'}[name];
   if(name==='spend'&&!$('pDate').value)$('pDate').value=ISO(today());
   window.scrollTo(0,0);
 }
 document.querySelectorAll('nav.tabbar button').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+$('helpBtn').onclick=()=>switchTab('help');
+$('helpLink').onclick=()=>switchTab('help');
 document.querySelectorAll('details.sec').forEach(d=>{const k=d.dataset.k;d.open=!!(S.ui&&S.ui[k]);d.addEventListener('toggle',()=>{S.ui=S.ui||{};S.ui[k]=d.open;persist();});});
 $('card').addEventListener('click',e=>{
   const go=e.target.closest('[data-go]');
@@ -590,11 +711,14 @@ $('card').addEventListener('click',e=>{
 $('card').addEventListener('change',e=>{if(e.target&&e.target.id==='cSel'){CARD=e.target.value;recalc();}});
 $('plan').addEventListener('click',e=>{const b=e.target.closest('button[data-card]');if(!b)return;CARD=b.dataset.card;recalc();switchTab('pay');});
 $('tab-spend').addEventListener('click',e=>{
+  const dn=e.target.closest('[data-done]');
+  if(dn){const cr=M.rows.find(r=>r.x.cur);if(dn.dataset.done==='set'&&cr)S.doneFor=ISO(cr.x.ps);else S.doneFor=null;recalc();return;}
   const w=e.target.closest('[data-wk]');
   if(w){WK=w.dataset.wk==='prev'?WK-1:(w.dataset.wk==='next'?WK+1:0);renderSpend();return;}
   const del=e.target.closest('[data-del]');
   if(del){if(!confirm('Delete this purchase?'))return;S.purchases=S.purchases.filter(p=>String(p.id)!==del.dataset.del);recalc();}
 });
+$('tab-spend').addEventListener('change',e=>{if(e.target&&e.target.id==='trackIn'){S.track=e.target.checked;recalc();}});
 $('pAdd').onclick=()=>{
   const a=num($('pAmt').value),d=$('pDate').value;
   if(!(a>0)){$('pErr').textContent='Enter an amount first.';return;}
