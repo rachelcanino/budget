@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Paycheck">
+<meta name="theme-color" content="#fafaf8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1c1c1b" media="(prefers-color-scheme: dark)">
+<title>Paycheck</title>
+<link rel="apple-touch-icon" id="touchIcon">
+<link rel="icon" id="favIcon">
+<style>
+:root{--bg:#fafaf8;--card:#fff;--soft:#f1efe8;--text:#1f1f1d;--muted:#6b6a65;--border:#dddbd3;--accent:#185fa5;--danger:#a32d2d;--ok:#3b6d11;--warn:#854f0b}
+@media (prefers-color-scheme:dark){:root{--bg:#1c1c1b;--card:#262624;--soft:#2f2f2d;--text:#ecebe6;--muted:#a8a7a0;--border:#3d3d3a;--accent:#85b7eb;--danger:#f09595;--ok:#97c459;--warn:#ef9f27}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 -apple-system,system-ui,"Segoe UI",sans-serif}
+header.top{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px}
+header.top h1{font-size:20px;margin:0}
+.pill{font-size:13px;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--soft)}
+main{padding:12px 14px calc(84px + env(safe-area-inset-bottom))}
+.tab[hidden]{display:none}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:12px}
+h2{font-size:17px;margin:2px 0 8px}
+.hint{color:var(--muted);font-size:13px;margin:6px 0}
+.t{display:block;font-size:12px;color:var(--muted);margin-bottom:3px}
+input,select,textarea{width:100%;min-height:44px;padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font:inherit;font-size:16px}
+textarea{min-height:90px}
+input[type=checkbox]{width:24px;height:24px;min-height:0;flex:none;padding:0}
+button{min-height:44px;padding:0 14px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font:inherit;font-size:15px}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.neg{color:var(--danger)}.pos{color:var(--ok)}.warn{color:var(--warn)}
+.line{display:flex;justify-content:space-between;gap:12px;padding:3px 0;font-variant-numeric:tabular-nums}
+.line span:first-child{color:var(--muted)}
+.line.tot{border-top:1px solid var(--border);margin-top:4px;padding-top:7px;font-weight:600}
+.line.tot span:first-child{color:var(--text)}
+.sub{font-size:13px;font-weight:600;margin:14px 0 4px}
+.big{font-size:22px;font-weight:700}
+.nav{display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;margin-bottom:10px}
+.nav select{min-height:40px}
+.nav button{min-height:40px;padding:0 14px;font-size:20px}
+.ttl{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:18px;font-weight:700}
+details.pc{background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;padding:10px 12px}
+details.pc summary{list-style:none}
+details.pc summary::-webkit-details-marker{display:none}
+.pch{display:flex;justify-content:space-between;align-items:baseline;font-weight:700}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.chip{background:var(--soft);border-radius:10px;padding:6px 8px}
+.chip .k{font-size:11px;color:var(--muted)}
+.chip .v{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
+.bar{height:10px;background:var(--soft);border-radius:6px;overflow:hidden;margin:6px 0}
+.bar>div{height:100%;background:var(--ok)}
+details.sec{background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:10px}
+details.sec>summary{list-style:none;padding:14px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary::after{content:'+';color:var(--muted);font-size:20px;line-height:1}
+details.sec[open]>summary::after{content:'−'}
+.secb{padding:0 14px 14px}
+.item{border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:8px}
+.item .head{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.item .out{font-weight:600;font-size:15px;min-height:44px;display:flex;align-items:center}
+.rm{min-height:36px;font-size:14px;color:var(--danger);margin-top:8px}
+.ck{display:flex;align-items:center;gap:8px;font-size:14px;min-height:44px}
+nav.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom)}
+nav.tabbar button{border:0;border-radius:0;background:transparent;min-height:56px;font-size:13px;color:var(--muted)}
+nav.tabbar button.on{color:var(--accent);font-weight:700}
+.empty{text-align:center;padding:16px 6px}
+</style>
+</head>
+<body>
+<header class="top"><h1 id="hTitle">Paycheck</h1><span class="pill" id="pill">-</span></header>
+<main>
+<section class="tab" id="tab-pay">
+  <div class="panel">
+    <div class="row2">
+      <div><span class="t">In your account now ($)</span><input id="cashIn" type="number" step="any" inputmode="decimal"></div>
+      <div><span class="t">Food and household on hand ($)</span><input id="onHandIn" type="number" step="any" inputmode="decimal"></div>
+    </div>
+    <p class="hint" id="upd"></p>
+    <p class="hint" id="statusText" style="color:var(--text)"></p>
+  </div>
+  <div class="panel" id="card"></div>
+</section>
+
+<section class="tab" id="tab-plan" hidden>
+  <p class="hint">Each card is one paycheck period. Ends with = Keep (spoken for, don't spend) + Spare (free to save or use). Tap a card for the details.</p>
+  <div id="plan"></div>
+</section>
+
+<section class="tab" id="tab-progress" hidden>
+  <div class="panel" id="checkin"></div>
+  <div class="panel" id="debts"></div>
+  <div class="panel" id="goalsProg"></div>
+</section>
+
+<section class="tab" id="tab-edit" hidden>
+  <details class="sec" data-k="spend"><summary>Weekly spending list</summary><div class="secb">
+    <p class="hint">Price each time, and how often in weeks (1 = weekly, 2 = every other week, 1.5 = every week and a half). Each paycheck gets two weeks of this list.</p>
+    <div id="spendList"></div><button type="button" id="addSpend">+ Add item</button>
+    <p class="hint" id="spendTotals"></p>
+  </div></details>
+  <details class="sec" data-k="monthly"><summary>Monthly bills</summary><div class="secb">
+    <p class="hint">Due day 31 means the last day of the month. Starts and Ends are optional.</p>
+    <div id="monthlyList"></div><button type="button" id="addMonthly">+ Add bill</button>
+  </div></details>
+  <details class="sec" data-k="biweekly"><summary>Every-two-weeks payments</summary><div class="secb">
+    <div id="biweeklyList"></div><button type="button" id="addBiweekly">+ Add payment</button>
+  </div></details>
+  <details class="sec" data-k="once"><summary>One-time and yearly items</summary><div class="secb">
+    <p class="hint">Use a negative amount for money coming in, like an advance.</p>
+    <div id="onceList"></div><button type="button" id="addOnce">+ Add item</button>
+  </div></details>
+  <details class="sec" data-k="paydays"><summary>Paydays and bank</summary><div class="secb">
+    <div class="row2">
+      <div><span class="t">Early deposit (days early)</span><input id="earlyIn" type="number" step="1" min="0" inputmode="numeric"></div>
+      <label class="ck"><input type="checkbox" id="graceIn"> Bank grace: back above $0 by next day = no fee</label>
+    </div>
+    <div id="paydaysList"></div><button type="button" id="addPaydays">+ Add payday</button>
+  </div></details>
+  <details class="sec" data-k="goals"><summary>Goals</summary><div class="secb">
+    <div id="goalsList"></div><button type="button" id="addGoals">+ Add goal</button>
+  </div></details>
+  <details class="sec" data-k="opp"><summary>OppLoan payoff calculator</summary><div class="secb">
+    <p class="hint">Estimate with simple interest every two weeks. Principal is what you owe before interest.</p>
+    <div class="row2">
+      <div><span class="t">Principal ($)</span><input id="oppP" type="number" step="any" inputmode="decimal"></div>
+      <div><span class="t">APR (%)</span><input id="oppA" type="number" step="any" inputmode="decimal"></div>
+      <div><span class="t">Payment every 2 weeks ($)</span><input id="oppPay" type="number" step="any" inputmode="decimal"></div>
+      <div><span class="t">Extra per payment ($)</span><input id="oppX" type="number" step="any" inputmode="decimal"></div>
+      <div><span class="t">First payment counted</span><input id="oppF" type="date"></div>
+      <label class="ck"><input type="checkbox" id="oppApply"> Add extra to plan</label>
+    </div>
+    <p class="hint" id="oppOut" style="color:var(--text)"></p>
+  </div></details>
+  <details class="sec" data-k="sync"><summary>Backup and sync</summary><div class="secb">
+    <p class="hint">Your phone and computer don't sync on their own. To move your numbers, save a backup on one and restore it on the other. Keep a recent backup in iCloud Drive in case this app's data is ever cleared.</p>
+    <div class="btns"><button type="button" class="primary" id="shareBtn">Save backup file</button><button type="button" id="fileBtn">Restore from file</button><input type="file" id="fileIn" hidden></div>
+    <div class="btns"><button type="button" id="copyBtn">Copy backup text</button></div>
+    <span class="t" style="margin-top:12px">Or paste backup text here</span>
+    <textarea id="pasteBox" placeholder="Paste backup text"></textarea>
+    <div class="btns"><button type="button" id="pasteBtn">Restore from pasted text</button><button type="button" id="resetBtn">Start over (blank)</button></div>
+    <p class="hint" id="syncMsg"></p>
+  </div></details>
+</section>
+</main>
+<nav class="tabbar">
+  <button type="button" data-tab="pay" class="on">Paycheck</button>
+  <button type="button" data-tab="plan">Plan</button>
+  <button type="button" data-tab="progress">Progress</button>
+  <button type="button" data-tab="edit">Edit</button>
+</nav>
+
+<script>
+const KEY='paycheckApp.v1';
+const $=id=>document.getElementById(id);
+const num=v=>{const n=parseFloat(v);return isNaN(n)?0:n;};
+const m2=n=>(n<0?'-$':'$')+Math.abs(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const m0=n=>(n<0?'-$':'$')+Math.abs(Math.round(n)).toLocaleString();
+const sg=n=>(n>0.005?'+':'')+m2(n);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function P(s){if(!s||typeof s!=='string')return null;const a=s.split('-').map(Number);if(a.length!==3||!a[0]||!a[1]||!a[2])return null;return new Date(a[0],a[1]-1,a[2]);}
+function ISO(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function addD(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x;}
+function dd(a,b){return Math.round((b-a)/864e5);}
+function fd(d){return (d.getMonth()+1)+'/'+d.getDate()+'/'+String(d.getFullYear()).slice(2);}
+function md(d){return (d.getMonth()+1)+'/'+d.getDate();}
+function dname(d){return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];}
+function today(){const d=new Date();d.setHours(0,0,0,0);return d;}
+let CARD=null,CARD_LIST=[],CARD_CUR=null,M=null;
+
+(function(){try{const c=document.createElement('canvas');c.width=c.height=180;const x=c.getContext('2d');x.fillStyle='#3b6d11';x.fillRect(0,0,180,180);x.fillStyle='#ffffff';x.font='bold 116px -apple-system, system-ui, sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('$',90,98);const u=c.toDataURL('image/png');$('touchIcon').href=u;$('favIcon').href=u;}catch(e){}})();
+
+function blank(){return {ver:12,ui:{},cash:0,onHand:0,early:1,grace:true,paydays:[],monthly:[],biweekly:[],once:[],spend:[],goals:[],opp:{principal:0,apr:0,pay:0,extra:0,first:'',apply:false},checkins:[],baseline:null};}
+function valid(x){return x&&Array.isArray(x.paydays)&&Array.isArray(x.monthly)&&Array.isArray(x.biweekly)&&Array.isArray(x.once)&&Array.isArray(x.spend)&&Array.isArray(x.goals)&&x.opp;}
+function normalize(o){if(!o.ui)o.ui={};if(!Array.isArray(o.checkins))o.checkins=[];if(o.baseline===undefined)o.baseline=null;if(o.onHand===undefined)o.onHand=0;if(o.grace===undefined)o.grace=true;if(o.early===undefined)o.early=1;return o;}
+let S=null;
+try{S=JSON.parse(localStorage.getItem(KEY));}catch(e){}
+if(!valid(S))S=blank();
+S=normalize(S);
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+const COLS={
+  spend:[{k:'on',t:'check',l:'Use'},{k:'n',t:'text',l:'Item'},{k:'c',t:'select',l:'Type',opts:['Food','Treat','Household']},{k:'p',t:'number',l:'Price ($)'},{k:'e',t:'number',l:'Every _ weeks'}],
+  goals:[{k:'n',t:'text',l:'Goal'},{k:'t',t:'number',l:'Target ($)'},{k:'s',t:'number',l:'Saved so far ($)'},{k:'d',t:'date',l:'By'}],
+  monthly:[{k:'n',t:'text',l:'Bill'},{k:'a',t:'number',l:'Amount ($)'},{k:'day',t:'number',l:'Due day'},{k:'from',t:'date',l:'Starts'},{k:'to',t:'date',l:'Ends'}],
+  biweekly:[{k:'n',t:'text',l:'Payment'},{k:'a',t:'number',l:'Amount ($)'},{k:'start',t:'date',l:'First date'},{k:'end',t:'date',l:'Last date'}],
+  once:[{k:'n',t:'text',l:'Item'},{k:'a',t:'number',l:'Amount ($)'},{k:'d',t:'date',l:'Date'}],
+  paydays:[{k:'d',t:'date',l:'Payday'},{k:'a',t:'number',l:'Take-home ($)'}]
+};
+const OUTL={spend:'Per week',goals:'Per paycheck'};
+const OUT={};
+
+function field(c,r){
+  let el;
+  if(c.t==='check'){el=document.createElement('input');el.type='checkbox';el.checked=r[c.k]!==false;el.addEventListener('change',()=>{r[c.k]=el.checked;recalc();});}
+  else if(c.t==='select'){el=document.createElement('select');c.opts.forEach(o=>{const op=document.createElement('option');op.value=o;op.textContent=o;el.append(op);});el.value=r[c.k]||c.opts[0];el.addEventListener('change',()=>{r[c.k]=el.value;recalc();});}
+  else{
+    el=document.createElement('input');el.type=c.t;
+    if(c.t==='number'){el.step='any';el.inputMode='decimal';el.placeholder='0';el.value=(r[c.k]===0||r[c.k])?r[c.k]:'';}
+    else{el.value=r[c.k]||'';if(c.t==='text')el.placeholder=c.l;}
+    el.addEventListener('input',()=>{r[c.k]=c.t==='number'?num(el.value):el.value;recalc();});
+  }
+  el.setAttribute('aria-label',c.l);return el;
+}
+function renderList(key){
+  const el=$(key+'List');el.innerHTML='';OUT[key]=[];
+  S[key].forEach((r,i)=>{
+    const card=document.createElement('div');card.className='item';
+    const head=document.createElement('div');head.className='head';
+    const g=document.createElement('div');g.className='row2';
+    COLS[key].forEach(c=>{
+      if(c.t==='check'||c.k==='n'){const f=field(c,r);if(c.k==='n')f.style.flex='1';head.append(f);}
+      else{const w=document.createElement('div');const s=document.createElement('span');s.className='t';s.textContent=c.l;w.append(s,field(c,r));g.append(w);}
+    });
+    if(head.childNodes.length)card.append(head);
+    if(OUTL[key]){const w=document.createElement('div');const s=document.createElement('span');s.className='t';s.textContent=OUTL[key];const o=document.createElement('div');o.className='out';OUT[key].push(o);w.append(s,o);g.append(w);}
+    card.append(g);
+    const rm=document.createElement('button');rm.type='button';rm.className='rm';rm.textContent='Remove';
+    rm.onclick=()=>{S[key].splice(i,1);renderList(key);recalc();};
+    card.append(rm);el.append(card);
+  });
+}
+
+function occMonthly(b,s,e){
+  const res=[],day=Math.max(1,Math.min(31,Math.round(num(b.day)||1))),f=P(b.from),t=P(b.to);let y=s.getFullYear(),m=s.getMonth();
+  for(let k=0;k<40;k++){const dim=new Date(y,m+1,0).getDate();const dt=new Date(y,m,Math.min(day,dim));if(dt>=e)break;if(dt>=s&&(!f||dt>=f)&&(!t||dt<=t))res.push(dt);m++;if(m>11){m=0;y++;}}
+  return res;
+}
+function occBiweekly(startISO,en,s,e){
+  const st=P(startISO);if(!st)return[];let d=new Date(st);
+  if(d<s){const k=Math.ceil(dd(d,s)/14);d=addD(d,14*k);}
+  const res=[];while(d<e&&(!en||d<=en)){res.push(new Date(d));d=addD(d,14);}return res;
+}
+function oppCalc(extra){
+  const o=S.opp,r=num(o.apr)/100/365*14,pay=num(o.pay)+extra;let bal=num(o.principal),d=P(o.first)||today(),interest=0,n=0;
+  if(bal<=0)return{ok:true,n:0,date:d,interest:0};
+  if(pay<=bal*r+0.0001)return{ok:false};
+  while(n<1000){const it=bal*r;n++;interest+=it;if(pay>=bal+it)return{ok:true,n:n,date:d,interest:interest};bal-=(pay-it);d=addD(d,14);}
+  return{ok:false};
+}
+function oppNow(){
+  const o=S.opp,P0=num(o.principal),r=num(o.apr)/100/365*14,pay=num(o.pay)+(o.apply?num(o.extra):0);let d=P(o.first);
+  if(!(P0>0)||!d||!(pay>0))return null;
+  let bal=P0;const t0=today();
+  while(d<=t0&&bal>0){const it=bal*r;if(pay>=bal+it){bal=0;break;}bal-=(pay-it);d=addD(d,14);}
+  return{start:P0,bal:bal};
+}
+function itemsBetween(s,e){
+  const L=[],o=S.opp,ex=num(o.extra),useEx=o.apply&&ex>0;let payoff=null;const oFirst=P(o.first);
+  if(useEx){const c=oppCalc(ex);if(c.ok)payoff=c.date;}
+  S.monthly.forEach(b=>{if(!(num(b.a)>0))return;occMonthly(b,s,e).forEach(d=>L.push({d:d,n:b.n||'Bill',a:num(b.a)}));});
+  S.biweekly.forEach(b=>{
+    let en=P(b.end);if(b.opp&&useEx&&payoff&&(!en||payoff<en))en=payoff;
+    occBiweekly(b.start,en,s,e).forEach(d=>{let a=num(b.a);if(b.opp&&useEx&&(!oFirst||d>=oFirst))a+=ex;if(a>0)L.push({d:d,n:b.n||'Payment',a:a});});
+  });
+  S.once.forEach(b=>{const d=P(b.d);if(d&&d>=s&&d<e&&num(b.a))L.push({d:d,n:b.n||'Item',a:num(b.a)});});
+  return L.sort((x,y)=>x.d-y.d);
+}
+function weekly(){
+  const t={Food:0,Treat:0,Household:0,all:0};
+  S.spend.forEach((r,i)=>{const w=(r.on!==false&&num(r.e)>0)?num(r.p)/num(r.e):0;if(OUT.spend&&OUT.spend[i])OUT.spend[i].textContent=m2(w);t[r.c||'Food']=(t[r.c||'Food']||0)+w;t.all+=w;});
+  return t;
+}
+
+function compute(){
+  const wk=weekly();
+  const t0=today(),early=Math.max(0,Math.round(num(S.early))),grace=S.grace!==false;
+  const pays=S.paydays.map(p=>({d:P(p.d),a:num(p.a)})).filter(p=>p.d).sort((x,y)=>x.d-y.d).map(p=>({d:p.d,a:p.a,dep:addD(p.d,-early)})).filter(p=>p.dep>=t0);
+  const st=[];
+  if(pays.length){if(t0<pays[0].dep)st.push({pre:true,s:t0,e:pays[0].dep,a:0});pays.forEach((p,i)=>st.push({pre:false,pd:p.d,s:p.dep,e:i<pays.length-1?pays[i+1].dep:addD(p.dep,14),a:p.a}));}
+  let bal=num(S.cash);const rows=[],dayBals=[];
+  st.forEach(x=>{
+    const items=itemsBetween(x.s,x.e),days=Math.max(0,dd(x.s,x.e));
+    let food,house,treat,credited=0;
+    if(x.pre){
+      food=wk.Food/7*days;house=wk.Household/7*days;treat=(wk.Treat||0)/7*days;
+      let credit=Math.max(0,num(S.onHand));const c0=credit;
+      const cf=Math.min(credit,food);food-=cf;credit-=cf;
+      const ch=Math.min(credit,house);house-=ch;credit-=ch;
+      const ct=Math.min(credit,treat);treat-=ct;credit-=ct;
+      credited=c0-credit;
+    }else{food=wk.Food*2;house=wk.Household*2;treat=(wk.Treat||0)*2;}
+    const sp=food+house+treat,dly=days?sp/days:0;
+    const carry=bal;bal+=x.a;const startBal=bal,startIdx=dayBals.length;
+    let min=Infinity,minD=null,idx=0;
+    for(let k=0;k<days;k++){
+      const day=addD(x.s,k),todays=[],sod=bal;
+      while(idx<items.length&&dd(items[idx].d,day)>=0){bal-=items[idx].a;todays.push(items[idx]);idx++;}
+      bal-=dly;todays.forEach(it=>{it.after=bal;});
+      dayBals.push({d:day,s:sod,b:bal});
+      if(bal<min){min=bal;minD=day;}
+    }
+    while(idx<items.length){bal-=items[idx].a;items[idx].after=bal;idx++;}
+    if(min===Infinity){min=bal;minD=x.s;}
+    const bills=items.reduce((a,i)=>a+i.a,0);
+    rows.push({x:x,items:items,bills:bills,food:food,house:house,treat:treat,sp:sp,own:x.a-bills-sp,carry:carry,startBal:startBal,endBal:bal,min:min,minD:minD,startIdx:startIdx,days:days,credited:credited});
+  });
+  const cov=dayBals.map((z,j)=>z.b>=-0.005?null:(grace&&j+1<dayBals.length&&dayBals[j+1].b>=-0.005));
+  const suf=new Array(dayBals.length);let mm=Infinity;
+  for(let j=dayBals.length-1;j>=0;j--){mm=Math.min(mm,dayBals[j].b);suf[j]=mm;}
+  let taken=0;
+  rows.forEach(r=>{
+    r.unc=false;r.cvd=false;
+    for(let j=r.startIdx;j<r.startIdx+r.days;j++){if(cov[j]===false)r.unc=true;if(cov[j]===true)r.cvd=true;}
+    const li=r.startIdx+r.days-1;r.endCls=r.endBal<-0.005?(li>=0&&cov[li]===true?'warn':'neg'):'';
+    r.minCls=r.min<-0.005?(r.unc?'neg':'warn'):'';
+    r.ownCls=r.own<-0.005?'neg':(r.own>0.005?'pos':'');
+    const fut=r.startIdx<suf.length?suf[r.startIdx]:r.endBal;
+    r.spareC=r.endBal>0?Math.max(0,Math.min(fut,r.endBal)):0;
+    r.keep=Math.max(0,r.endBal-r.spareC);
+    r.safe=Math.max(0,fut-taken);taken+=r.safe;
+  });
+  let uMin=Infinity,uD=null,cMin=Infinity,cD=null,cCount=0,gMin=Infinity,gD=null;
+  dayBals.forEach((z,j)=>{
+    if(z.b<gMin){gMin=z.b;gD=z.d;}
+    if(cov[j]===false&&z.b<uMin){uMin=z.b;uD=z.d;}
+    if(cov[j]===true){cCount++;if(z.b<cMin){cMin=z.b;cD=z.d;}}
+  });
+  return{wk:wk,pays:pays,rows:rows,dayBals:dayBals,uMin:uMin,uD:uD,cMin:cMin,cD:cD,cCount:cCount,gMin:gMin,gD:gD,uncRows:rows.filter(r=>r.unc).length,grace:grace};
+}
+
+function renderUpdated(){
+  const u=P(S.updated),el=$('upd');
+  if(!u){el.textContent='Update these each time you open the app so the plan starts from where you are.';el.className='hint warn';return;}
+  const stale=u<today();
+  el.textContent='Last updated '+dname(u)+' '+fd(u)+(stale?'. Update if anything has changed.':'.');
+  el.className='hint'+(stale?' warn':'');
+}
+function renderStatus(){
+  const p=$('pill'),t=$('statusText'),rows=M.rows;
+  if(!rows.length){p.textContent='Set up';p.className='pill';t.textContent='';return;}
+  const lastDay=fd(addD(rows[rows.length-1].x.e,-1));
+  if(M.uD){
+    p.textContent='Short '+m0(-M.uMin);p.className='pill neg';
+    const nx=M.pays.map(q=>q.dep).find(d=>d>M.uD);
+    let s="You'd be about "+m2(-M.uMin)+' short on '+fd(M.uD);
+    if(nx){const k=dd(M.uD,nx);s+=', '+k+' day'+(k===1?'':'s')+' before your next paycheck lands';}
+    t.textContent=s+(M.grace?', longer than your bank grace window.':'.');
+  }else if(M.cD){
+    p.textContent='Covered';p.className='pill warn';
+    t.textContent='Covered through '+lastDay+'. Your balance dips to '+m2(M.cMin)+' on '+fd(M.cD)+', but the next paycheck fixes it within your bank grace window.';
+  }else{
+    p.textContent='Covered';p.className='pill pos';
+    t.textContent='Every day stays above $0 through '+lastDay+'. Lowest point: '+m2(M.gMin)+' on '+fd(M.gD)+'.';
+  }
+}
+function renderCard(){
+  const el=$('card'),rows=M.rows;
+  const idxs=rows.map((r,i)=>r.x.pre?-1:i).filter(i=>i>=0);
+  if(!idxs.length){el.innerHTML='<div class="empty"><div class="big">Welcome</div><p class="hint">To get started, restore the backup from your computer planner.</p><button type="button" class="primary" data-go="sync">Go to Backup and sync</button></div>';CARD_LIST=[];CARD_CUR=null;return;}
+  CARD_LIST=idxs.map(i=>ISO(rows[i].x.pd));
+  let pos=CARD?CARD_LIST.indexOf(CARD):0;if(pos<0)pos=0;
+  const i=idxs[pos],r=rows[i],x=r.x,isNext=pos===0,pre=(isNext&&i>0&&rows[0].x.pre)?rows[0]:null,nxt=rows[i+1]||null;
+  CARD_CUR=CARD_LIST[pos];
+  let h='<div class="nav"><button type="button" data-nav="prev" aria-label="Previous paycheck">‹</button><select id="cSel" aria-label="Choose a paycheck">';
+  idxs.forEach((j,k)=>{h+='<option value="'+CARD_LIST[k]+'"'+(k===pos?' selected':'')+'>'+dname(rows[j].x.pd)+' '+fd(rows[j].x.pd)+(k===0?' (next)':'')+'</option>';});
+  h+='</select><button type="button" data-nav="next" aria-label="Next paycheck">›</button></div>';
+  if(!isNext)h+='<button type="button" data-nav="now" style="width:100%;margin-bottom:10px">Back to next paycheck</button>';
+  h+='<div class="ttl"><span>'+(isNext?'Next paycheck':'Paycheck')+' · '+dname(x.pd)+' '+md(x.pd)+'</span><span>'+m2(x.a)+'</span></div>';
+  h+='<p class="hint">'+(dd(x.s,x.pd)>0?'Lands '+dname(x.s)+' '+md(x.s)+' with early deposit. ':'')+'Left over from before: '+m2(r.carry)+'. After it lands: '+m2(r.startBal)+'.</p>';
+  if(pre)h+='<p class="hint">Until then: '+m2(pre.startBal)+' in your account'+(pre.bills>0.005?', with '+m2(pre.bills)+' in bills due first':', nothing due')+(pre.min<-0.005?'. Heads-up: you dip to '+m2(pre.min)+' on '+dname(pre.minD)+' '+md(pre.minD):'')+'.</p>';
+  h+='<div class="sub">Pay from this check (until '+dname(x.e)+' '+md(x.e)+')</div>';
+  if(r.items.length)r.items.forEach(it=>{h+='<div class="line"><span>'+dname(it.d)+' '+md(it.d)+' · '+esc(it.n)+'</span><span>'+m2(it.a)+'</span></div>';});
+  else h+='<div class="line"><span>No bills due</span><span></span></div>';
+  h+='<div class="line tot"><span>Bills total</span><span>'+m2(r.bills)+'</span></div>';
+  h+='<div class="sub">Spend</div><div class="line"><span>Groceries</span><span>'+m2(r.food)+'</span></div><div class="line"><span>Household</span><span>'+m2(r.house)+'</span></div>';
+  if(r.treat>0.005)h+='<div class="line"><span>Treats</span><span>'+m2(r.treat)+'</span></div>';
+  h+='<div class="sub">What is left</div>';
+  h+='<div class="line"><span>This paycheck on its own</span><span class="'+r.ownCls+'">'+sg(r.own)+'</span></div>';
+  h+='<div class="line"><span>When the next check lands</span><span class="'+r.endCls+'">'+m2(r.endBal)+'</span></div>';
+  h+='<div class="line tot"><span>Keep for upcoming bills</span><span>'+m2(r.keep)+'</span></div>';
+  h+='<div class="line"><span>Spare: safe to save or use</span><span class="'+(r.spareC>0.005?'pos':'')+'">'+m2(r.spareC)+'</span></div>';
+  [r,nxt].forEach((q,k)=>{if(q&&q.min<-0.005){h+='<p class="hint '+(q.unc?'neg':'warn')+'">'+(k===0?'This period':'The next period ('+md(q.x.pd)+' check)')+' dips to '+m2(q.min)+' on '+dname(q.minD)+' '+md(q.minD)+(q.unc?'. That is a real shortfall.':' for one day; the paycheck after it fixes that within your bank grace window.')+'</p>';}});
+  el.innerHTML=h;
+}
+function renderPlan(){
+  const rows=M.rows,open=[...document.querySelectorAll('#plan details')].map(d=>d.open);
+  if(!rows.length){$('plan').innerHTML='<div class="panel empty"><p class="hint">Restore your backup to see your plan.</p></div>';return;}
+  let h='';
+  rows.forEach((r,i)=>{
+    const x=r.x;
+    h+='<details class="pc"'+(open[i]?' open':'')+'><summary><div class="pch"><span>'+(x.pre?'Now':dname(x.pd)+' '+fd(x.pd))+'</span><span>'+(x.pre?'—':m2(x.a))+'</span></div>';
+    h+='<div class="chips"><div class="chip"><div class="k">Ends with</div><div class="v '+r.endCls+'">'+m0(r.endBal)+'</div></div><div class="chip"><div class="k">Keep</div><div class="v">'+m0(r.keep)+'</div></div><div class="chip"><div class="k">Spare</div><div class="v '+(r.spareC>0.005?'pos':'')+'">'+m0(r.spareC)+'</div></div></div>';
+    h+='<p class="hint" style="margin-bottom:0">On its own <span class="'+r.ownCls+'">'+sg(r.own)+'</span> · Lowest <span class="'+r.minCls+'">'+m2(r.min)+'</span> on '+md(r.minD)+'</p></summary>';
+    if(x.pre)h+='<div class="line"><span>Money in your account now</span><span>'+m2(r.startBal)+'</span></div>';
+    else{
+      const prev=i>0?rows[i-1]:null;
+      h+='<div class="line"><span>Left over from before</span><span class="'+(r.carry<-0.005?((prev&&prev.endCls)||'neg'):'')+'">'+m2(r.carry)+'</span></div>';
+      h+='<div class="line"><span>'+dname(x.s)+' '+md(x.s)+' · Paycheck lands</span><span>+'+m2(x.a)+'</span></div>';
+      h+='<div class="line tot"><span>You start with</span><span>'+m2(r.startBal)+'</span></div>';
+    }
+    h+='<div class="sub">Bills</div>';
+    if(r.items.length)r.items.forEach(it=>{h+='<div class="line"><span>'+md(it.d)+' · '+esc(it.n)+' '+m2(it.a)+'</span><span class="'+(it.after<-0.005?(r.unc?'neg':'warn'):'')+'">left '+m2(it.after)+'</span></div>';});
+    else h+='<div class="line"><span>None</span><span></span></div>';
+    h+='<div class="sub">Spend</div><div class="line"><span>Groceries'+(x.pre&&r.credited>0?' (after what you have)':'')+'</span><span>'+m2(r.food)+'</span></div><div class="line"><span>Household</span><span>'+m2(r.house)+'</span></div>';
+    if(r.treat>0.005)h+='<div class="line"><span>Treats</span><span>'+m2(r.treat)+'</span></div>';
+    h+='<div class="line tot"><span>Ends with</span><span class="'+r.endCls+'">'+m2(r.endBal)+'</span></div><div class="line"><span>Keep (don\'t spend)</span><span>'+m2(r.keep)+'</span></div><div class="line"><span>Spare</span><span class="'+(r.spareC>0.005?'pos':'')+'">'+m2(r.spareC)+'</span></div>';
+    if(!x.pre)h+='<div class="btns"><button type="button" data-card="'+ISO(x.pd)+'">Open in Paycheck tab</button></div>';
+    h+='</details>';
+  });
+  $('plan').innerHTML=h;
+}
+function chartSVG(list){
+  const pts=list.filter(c=>c.e!==null&&c.e!==undefined);if(pts.length<2)return'';
+  const vals=pts.flatMap(c=>[c.a,c.e]);let lo=Math.min(...vals),hi=Math.max(...vals);if(hi-lo<1){hi+=1;lo-=1;}
+  const W=320,H=110,X=i=>10+i*(W-20)/(pts.length-1),Y=v=>H-12-(v-lo)/(hi-lo)*(H-24);
+  const line=k=>pts.map((c,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(c[k]).toFixed(1)).join(' ');
+  return'<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Your balance compared with the plan at each check-in"><path d="'+line('e')+'" fill="none" stroke="#888780" stroke-width="2" stroke-dasharray="5 4"/><path d="'+line('a')+'" fill="none" stroke="#185fa5" stroke-width="2.5" stroke-linejoin="round"/></svg><p class="hint">Solid: your balance · Dashed: what the plan expected</p>';
+}
+function renderProgress(){
+  const t0=today(),k=ISO(t0);let h='<h2>Check-in</h2>';
+  if(!M.rows.length){h+='<p class="hint">Restore your backup first (Edit → Backup and sync).</p>';}
+  else{
+    h+='<div class="line"><span>Free to save or use right now</span><span class="pos">'+m2(M.rows[0].spareC)+'</span></div>';
+    if(!S.baseline){h+='<p class="hint">Set a baseline to track your progress. It saves today\'s plan so you can compare your real balance against it later.</p><div class="btns"><button type="button" class="primary" data-act="baseline">Set baseline from today\'s plan</button></div>';}
+    else{
+      const pt=S.baseline.pts?S.baseline.pts[k]:null,exp=pt?pt[0]:null,act=num(S.cash);
+      h+='<div class="line"><span>Baseline set</span><span>'+fd(P(S.baseline.set))+'</span></div>';
+      if(exp===null)h+='<p class="hint">Today is outside your baseline\'s dates. Reset the baseline to keep tracking.</p>';
+      else{const df=act-exp;h+='<div class="line"><span>Plan expected (start of today)</span><span>'+m2(exp)+'</span></div><div class="line"><span>In your account now</span><span>'+m2(act)+'</span></div><div class="line tot"><span>'+(Math.abs(df)<5?'On track':(df>0?'Ahead of plan':'Behind plan'))+'</span><span class="'+(df>=-5?'pos':'neg')+'">'+sg(df)+'</span></div>';}
+      h+='<p class="hint">Update "In your account now" on the Paycheck tab first. A bill that hasn\'t posted yet can make you look ahead for a day or two.</p>';
+      h+='<div class="btns"><button type="button" class="primary" data-act="checkin">Save today\'s check-in</button><button type="button" data-act="baseline">Reset baseline</button></div>';
+      const asc=S.checkins.slice().sort((a,b)=>a.d<b.d?-1:1);
+      if(asc.length){
+        h+='<div class="sub">History</div>'+chartSVG(asc);
+        asc.slice().reverse().forEach(c=>{const d=P(c.d),has=c.e!==null&&c.e!==undefined,df=has?c.a-c.e:null;h+='<div class="line"><span>'+dname(d)+' '+fd(d)+' · '+m0(c.a)+(has?' vs '+m0(c.e):'')+'</span><span class="'+(df===null?'':(df>=-5?'pos':'neg'))+'">'+(df===null?'—':sg(df))+'</span></div>';});
+      }
+    }
+  }
+  $('checkin').innerHTML=h;
+
+  let d='<h2>Debt payoff</h2>',any=false;
+  const ob=S.biweekly.find(b=>b.opp)||S.biweekly.find(b=>/opploan/i.test(b.n||''));
+  if(ob){
+    any=true;const left=occBiweekly(ob.start,P(ob.end),t0,addD(t0,1500)),amt=num(ob.a)+(S.opp.apply?num(S.opp.extra):0);
+    d+='<div class="sub">'+esc(ob.n||'OppLoan')+'</div>';
+    if(!left.length)d+='<div class="bar"><div style="width:100%"></div></div><div class="line"><span>Status</span><span class="pos">Paid off</span></div>';
+    else{
+      const est=oppNow();
+      if(est){const pct=est.start>0?Math.max(0,Math.min(1,(est.start-est.bal)/est.start)):0;d+='<div class="bar"><div style="width:'+(pct*100).toFixed(1)+'%"></div></div><div class="line"><span>Estimated principal left</span><span>'+m2(est.bal)+'</span></div><div class="line"><span>Paid down so far</span><span>'+Math.round(pct*100)+'%</span></div>';}
+      d+='<div class="line"><span>Payments left on schedule</span><span>'+left.length+' ('+m0(left.length*amt)+')</span></div><div class="line"><span>Next payment</span><span>'+dname(left[0])+' '+md(left[0])+'</span></div><div class="line"><span>Last scheduled payment</span><span>'+fd(left[left.length-1])+'</span></div>';
+    }
+  }
+  const loc=S.once.filter(x=>/line of credit/i.test(x.n||'')).map(x=>({d:P(x.d),a:num(x.a)})).filter(x=>x.d).sort((a,b)=>a.d-b.d);
+  if(loc.length){
+    any=true;const paid=loc.filter(x=>x.d<t0),rem=loc.filter(x=>x.d>=t0),pct=paid.length/loc.length;
+    d+='<div class="sub">Brigit line of credit</div><div class="bar"><div style="width:'+(pct*100).toFixed(1)+'%"></div></div>';
+    if(!rem.length)d+='<div class="line"><span>Status</span><span class="pos">Paid off</span></div>';
+    else d+='<div class="line"><span>Payments left</span><span>'+rem.length+' of '+loc.length+'</span></div><div class="line"><span>Left to pay</span><span>'+m2(rem.reduce((a,x)=>a+x.a,0))+'</span></div><div class="line"><span>Next payment</span><span>'+dname(rem[0].d)+' '+md(rem[0].d)+'</span></div><div class="line"><span>Last payment</span><span>'+fd(rem[rem.length-1].d)+'</span></div>';
+  }
+  if(!any)d+='<p class="hint">No loans found yet. OppLoan shows up from Every-two-weeks payments; payments named "line of credit" show up from One-time items.</p>';
+  $('debts').innerHTML=d;
+
+  let g='<h2>Goals</h2>';
+  if(!S.goals.length)g+='<p class="hint">Add goals in Edit → Goals.</p>';
+  else{
+    S.goals.forEach(x=>{
+      const t=num(x.t),s=num(x.s),pct=t>0?Math.min(1,s/t):0,gd=P(x.d),need=Math.max(0,t-s);let per='';
+      if(need>0&&gd&&gd>=t0){let cnt=M.pays.filter(p=>p.d<=gd).length;const last=M.pays.length?M.pays[M.pays.length-1].d:t0;if(gd>last)cnt+=Math.floor(dd(last,gd)/14);cnt=Math.max(1,cnt);per='Needs '+m2(need/cnt)+' per paycheck by '+fd(gd);}
+      else if(need>0&&gd)per='Target date has passed';
+      else if(need===0&&t>0)per='Reached';
+      g+='<div class="sub">'+esc(x.n||'Goal')+'</div><div class="bar"><div style="width:'+(pct*100).toFixed(1)+'%"></div></div><div class="line"><span>'+m2(s)+' of '+m2(t)+'</span><span>'+Math.round(pct*100)+'%</span></div>'+(per?'<p class="hint" style="margin:2px 0 0">'+per+'</p>':'');
+    });
+    g+='<p class="hint">Update "Saved so far" in Edit → Goals as you go.</p>';
+  }
+  $('goalsProg').innerHTML=g;
+}
+function renderOpp(){
+  const base=oppCalc(0),ex=num(S.opp.extra),my=d=>d.toLocaleString(undefined,{month:'long',year:'numeric'});let ot='';
+  if(!(num(S.opp.principal)>0)){$('oppOut').textContent='';return;}
+  if(!base.ok)ot='At this payment the balance never goes down, because the payment does not cover the interest.';
+  else{ot='At '+m2(num(S.opp.pay))+' every two weeks: paid off around '+my(base.date)+', about '+m0(base.interest)+' in interest.';if(ex>0){const c=oppCalc(ex);if(c.ok)ot+=' With '+m2(ex)+' extra each payment: around '+my(c.date)+', saving about '+m0(base.interest-c.interest)+'.';}}
+  $('oppOut').textContent=ot;
+}
+function recalc(){
+  M=compute();
+  $('spendTotals').textContent='Total '+m2(M.wk.all)+' a week, '+m2(M.wk.all*2)+' per paycheck.';
+  renderUpdated();renderStatus();renderCard();renderPlan();renderProgress();renderOpp();persist();
+}
+function renderEdit(){
+  ['spend','monthly','biweekly','once','paydays','goals'].forEach(renderList);
+  $('cashIn').value=S.cash;$('onHandIn').value=S.onHand;$('earlyIn').value=S.early;$('graceIn').checked=S.grace!==false;
+  $('oppP').value=S.opp.principal||'';$('oppA').value=S.opp.apr||'';$('oppPay').value=S.opp.pay||'';$('oppX').value=S.opp.extra||'';$('oppF').value=S.opp.first||'';$('oppApply').checked=!!S.opp.apply;
+}
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(s=>{s.hidden=s.id!=='tab-'+name;});
+  document.querySelectorAll('nav.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.tab===name));
+  $('hTitle').textContent={pay:'Paycheck',plan:'Plan',progress:'Progress',edit:'Edit'}[name];
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('nav.tabbar button').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+document.querySelectorAll('details.sec').forEach(d=>{const k=d.dataset.k;d.open=!!(S.ui&&S.ui[k]);d.addEventListener('toggle',()=>{S.ui=S.ui||{};S.ui[k]=d.open;persist();});});
+$('card').addEventListener('click',e=>{
+  const go=e.target.closest('[data-go]');
+  if(go){switchTab('edit');const s=document.querySelector('details.sec[data-k="sync"]');s.open=true;s.scrollIntoView({block:'start'});return;}
+  const b=e.target.closest('button[data-nav]');if(!b||!CARD_LIST.length)return;
+  let i=CARD_LIST.indexOf(CARD_CUR);if(i<0)i=0;
+  if(b.dataset.nav==='prev')i=Math.max(0,i-1);else if(b.dataset.nav==='next')i=Math.min(CARD_LIST.length-1,i+1);else i=0;
+  CARD=CARD_LIST[i];recalc();
+});
+$('card').addEventListener('change',e=>{if(e.target&&e.target.id==='cSel'){CARD=e.target.value;recalc();}});
+$('plan').addEventListener('click',e=>{const b=e.target.closest('button[data-card]');if(!b)return;CARD=b.dataset.card;recalc();switchTab('pay');});
+$('checkin').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-act]');if(!b)return;
+  if(b.dataset.act==='baseline'){
+    if(S.baseline&&!confirm("Replace your baseline with today's plan?"))return;
+    S.baseline={set:ISO(today()),pts:{}};
+    M.dayBals.forEach(z=>{S.baseline.pts[ISO(z.d)]=[Math.round(z.s*100)/100,Math.round(z.b*100)/100];});
+    recalc();
+  }else if(b.dataset.act==='checkin'){
+    const k=ISO(today()),pt=S.baseline&&S.baseline.pts?S.baseline.pts[k]:null;
+    S.checkins=S.checkins.filter(c=>c.d!==k);
+    S.checkins.push({d:k,a:num(S.cash),e:pt?pt[0]:null});
+    recalc();
+  }
+});
+$('cashIn').addEventListener('input',e=>{S.cash=num(e.target.value);S.updated=ISO(today());recalc();});
+$('onHandIn').addEventListener('input',e=>{S.onHand=num(e.target.value);S.updated=ISO(today());recalc();});
+$('earlyIn').addEventListener('input',e=>{S.early=num(e.target.value);recalc();});
+$('graceIn').addEventListener('change',e=>{S.grace=e.target.checked;recalc();});
+[['oppP','principal'],['oppA','apr'],['oppPay','pay'],['oppX','extra']].forEach(([id,k])=>{$(id).addEventListener('input',e=>{S.opp[k]=num(e.target.value);recalc();});});
+$('oppF').addEventListener('input',e=>{S.opp.first=e.target.value;recalc();});
+$('oppApply').addEventListener('change',e=>{S.opp.apply=e.target.checked;recalc();});
+const NEW={
+  spend:()=>({on:true,n:'',c:'Food',p:0,e:1}),goals:()=>({n:'',t:0,s:0,d:''}),monthly:()=>({n:'',a:0,day:1,from:'',to:''}),
+  biweekly:()=>({n:'',a:0,start:'',end:''}),once:()=>({n:'',a:0,d:''}),
+  paydays:()=>{const L=S.paydays[S.paydays.length-1],ld=L&&P(L.d);return{d:ld?ISO(addD(ld,14)):ISO(today()),a:999};}
+};
+Object.keys(NEW).forEach(k=>{$('add'+k[0].toUpperCase()+k.slice(1)).onclick=()=>{S[k].push(NEW[k]());renderList(k);recalc();const ins=$(k+'List').querySelectorAll('input[type=text],input[type=date]');if(ins.length)ins[ins.length-1].focus();};});
+function msg(t){$('syncMsg').textContent=t;}
+function backupText(){return JSON.stringify(S,null,2);}
+function restore(txt){
+  let x;try{x=JSON.parse(txt);}catch(e){msg("That isn't a planner backup.");return;}
+  if(!valid(x)){msg("That isn't a planner backup.");return;}
+  if(!confirm('Replace the numbers in this app with this backup?'))return;
+  S=normalize(x);CARD=null;renderEdit();recalc();msg('Backup restored.');
+}
+$('shareBtn').onclick=async()=>{
+  const name='paycheck-backup-'+ISO(today())+'.json',txt=backupText();
+  try{const f=new File([txt],name,{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Paycheck backup'});msg('Backup shared. Choose "Save to Files" to keep it in iCloud Drive.');return;}}catch(e){if(e&&e.name==='AbortError')return;}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'application/json'}));a.download=name;document.body.append(a);a.click();a.remove();msg('Backup downloaded.');
+};
+$('fileBtn').onclick=()=>$('fileIn').click();
+$('fileIn').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{restore(r.result);e.target.value='';};r.readAsText(f);};
+$('copyBtn').onclick=async()=>{const txt=backupText();try{await navigator.clipboard.writeText(txt);msg('Backup text copied.');}catch(e){$('pasteBox').value=txt;$('pasteBox').select();msg('Copy the text in the box below.');}};
+$('pasteBtn').onclick=()=>restore($('pasteBox').value);
+$('resetBtn').onclick=()=>{if(confirm('Clear everything in this app? Save a backup first if you want to keep your numbers.')){S=blank();CARD=null;renderEdit();recalc();msg('Started over.');}};
+renderEdit();
+recalc();
+</script>
+</body>
+</html>b
