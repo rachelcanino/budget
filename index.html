@@ -100,6 +100,7 @@ nav.tabbar button.on{color:var(--accent);font-weight:700}
 </section>
 
 <section class="tab" id="tab-spend" hidden>
+  <div class="panel" id="trackPanel"></div>
   <div class="panel">
     <div class="nav"><button type="button" data-wk="prev" aria-label="Previous week">‹</button><div class="wklbl" id="wkLabel"></div><button type="button" data-wk="next" aria-label="Next week">›</button></div>
     <div id="wkSummary"></div>
@@ -116,7 +117,6 @@ nav.tabbar button.on{color:var(--accent);font-weight:700}
     <button type="button" class="primary" id="pAdd" style="width:100%">Add purchase</button>
   </div>
   <div class="panel" id="periodSummary"></div>
-  <div class="panel" id="trackPanel"></div>
   <div class="panel" id="wkList"></div>
   <div class="panel">
     <span class="t">Weeks start on</span>
@@ -220,9 +220,9 @@ nav.tabbar button.on{color:var(--accent);font-weight:700}
     </ul>
   </div>
   <div class="panel">
-    <h2>Logging purchases</h2>
-    <p>With "Use my logged purchases in the plan" turned on (Spend tab), the plan only counts what's left of this period's grocery and household allowance. Money you don't spend becomes Spare when the next paycheck lands, or right away if you tap "I'm done shopping until next payday."</p>
-    <p>Log every purchase. If you skip one, Spare will look a little smaller than it really is until the next paycheck. Use "Other" for things that aren't in your spending list.</p>
+    <h2>Spending and the plan</h2>
+    <p>Tap "I'm done shopping until next payday" (top of the Spend tab) when you won't buy anything else before your next paycheck lands. The plan stops setting money aside for groceries and household until then, so that money counts as Spare. You can undo it.</p>
+    <p>With "Use my logged purchases in the plan" turned on, the plan only counts what's left of this period's grocery and household allowance, based on what you log. Money you don't spend becomes Spare when the next paycheck lands. Log every purchase. If you skip one, Spare will look a little smaller than it really is until then. Use "Other" for things that aren't in your spending list.</p>
   </div>
   <div class="panel">
     <h2>On payday</h2>
@@ -389,13 +389,17 @@ function compute(){
   let bal=num(S.cash);const rows=[],dayBals=[];
   st.forEach(x=>{
     const items=itemsBetween(x.s,x.e),days=Math.max(0,dd(x.s,x.e));
-    let food,house,treat,credited=0,trk=null;
-    if(x.cur&&track){
-      const done=S.doneFor===ISO(x.ps),logged=catSums(x.ps,addD(t0,1)),allow={Food:wk.Food*2,Household:wk.Household*2,Treat:(wk.Treat||0)*2};
-      food=done?0:Math.max(0,allow.Food-logged.Food);
-      house=done?0:Math.max(0,allow.Household-logged.Household);
-      treat=done?0:Math.max(0,allow.Treat-logged.Treat);
-      trk={allow:allow,logged:logged,done:done};
+    let food,house,treat,credited=0,trk=null,done=false;
+    if(x.pre||x.cur)done=S.doneFor==='until:'+ISO(x.e);
+    if(done){
+      food=0;house=0;treat=0;
+      if(x.cur&&track)trk={allow:{Food:wk.Food*2,Household:wk.Household*2,Treat:(wk.Treat||0)*2},logged:catSums(x.ps,addD(t0,1)),done:true};
+    }else if(x.cur&&track){
+      const logged=catSums(x.ps,addD(t0,1)),allow={Food:wk.Food*2,Household:wk.Household*2,Treat:(wk.Treat||0)*2};
+      food=Math.max(0,allow.Food-logged.Food);
+      house=Math.max(0,allow.Household-logged.Household);
+      treat=Math.max(0,allow.Treat-logged.Treat);
+      trk={allow:allow,logged:logged,done:false};
     }else if(x.pre||x.cur){
       food=wk.Food/7*days;house=wk.Household/7*days;treat=(wk.Treat||0)/7*days;
       let credit=Math.max(0,num(S.onHand));const c0=credit;
@@ -419,7 +423,7 @@ function compute(){
     const bills=items.reduce((a,i)=>a+i.a,0);
     let own=x.a-bills-sp;
     if(x.cur){const fi=itemsBetween(x.ps,x.e);own=x.pa-fi.reduce((a,i)=>a+i.a,0)-wk.all*2;}
-    rows.push({x:x,items:items,bills:bills,food:food,house:house,treat:treat,sp:sp,own:own,carry:carry,startBal:startBal,endBal:bal,min:min,minD:minD,startIdx:startIdx,days:days,credited:credited,trk:trk});
+    rows.push({x:x,items:items,bills:bills,food:food,house:house,treat:treat,sp:sp,own:own,carry:carry,startBal:startBal,endBal:bal,min:min,minD:minD,startIdx:startIdx,days:days,credited:credited,trk:trk,done:done});
   });
   const cov=dayBals.map((z,j)=>z.b>=-0.005?null:(grace&&j+1<dayBals.length&&dayBals[j+1].b>=-0.005));
   const suf=new Array(dayBals.length);let mm=Infinity;
@@ -471,14 +475,13 @@ function renderStatus(){
   }
 }
 function spendLines(r){
-  let h='';const x=r.x;
+  const x=r.x;
+  if(r.done)return '<div class="line"><span>Done shopping until '+dname(x.e)+' '+md(x.e)+'</span><span>$0.00</span></div>';
+  let h='';
   if(r.trk){
-    if(r.trk.done)h+='<div class="line"><span>Marked done shopping</span><span>$0.00</span></div>';
-    else{
-      h+='<div class="line"><span>Groceries left</span><span>'+m2(r.food)+' of '+m2(r.trk.allow.Food)+'</span></div>';
-      h+='<div class="line"><span>Household left</span><span>'+m2(r.house)+' of '+m2(r.trk.allow.Household)+'</span></div>';
-      if(r.trk.allow.Treat>0.005)h+='<div class="line"><span>Treats left</span><span>'+m2(r.treat)+' of '+m2(r.trk.allow.Treat)+'</span></div>';
-    }
+    h+='<div class="line"><span>Groceries left</span><span>'+m2(r.food)+' of '+m2(r.trk.allow.Food)+'</span></div>';
+    h+='<div class="line"><span>Household left</span><span>'+m2(r.house)+' of '+m2(r.trk.allow.Household)+'</span></div>';
+    if(r.trk.allow.Treat>0.005)h+='<div class="line"><span>Treats left</span><span>'+m2(r.treat)+' of '+m2(r.trk.allow.Treat)+'</span></div>';
   }else{
     const sfx=(x.pre||x.cur)&&r.credited>0?' (after what you have)':'';
     h+='<div class="line"><span>Groceries'+sfx+'</span><span>'+m2(r.food)+'</span></div><div class="line"><span>Household</span><span>'+m2(r.house)+'</span></div>';
@@ -502,7 +505,7 @@ function renderCard(){
   h+='<div class="ttl"><span>'+ttl+' · '+dname(x.pd)+' '+md(x.pd)+'</span><span>'+m2(x.cur?x.pa:x.a)+'</span></div>';
   if(x.cur)h+='<p class="hint">Landed '+dname(x.ps)+' '+md(x.ps)+' and is already in your balance. You have '+m2(r.startBal)+' now.</p>';
   else h+='<p class="hint">'+(dd(x.s,x.pd)>0?'Lands '+dname(x.s)+' '+md(x.s)+' with early deposit. ':'')+'Left over from before: '+m2(r.carry)+'. After it lands: '+m2(r.startBal)+'.</p>';
-  if(pre)h+='<p class="hint">Until then: '+m2(pre.startBal)+' in your account'+(pre.bills>0.005?', with '+m2(pre.bills)+' in bills due first':', nothing due')+(pre.min<-0.005?'. Heads-up: you dip to '+m2(pre.min)+' on '+dname(pre.minD)+' '+md(pre.minD):'')+'.</p>';
+  if(pre)h+='<p class="hint">Until then: '+m2(pre.startBal)+' in your account'+(pre.bills>0.005?', with '+m2(pre.bills)+' in bills due first':', nothing due')+(pre.done?', and you\'re done shopping':'')+(pre.min<-0.005?'. Heads-up: you dip to '+m2(pre.min)+' on '+dname(pre.minD)+' '+md(pre.minD):'')+'.</p>';
   h+='<div class="sub">'+(x.cur?'Still to pay this period':'Pay from this check')+' (until '+dname(x.e)+' '+md(x.e)+')</div>';
   if(r.items.length)r.items.forEach(it=>{h+='<div class="line"><span>'+dname(it.d)+' '+md(it.d)+' · '+esc(it.n)+'</span><span>'+m2(it.a)+'</span></div>';});
   else h+='<div class="line"><span>No bills due</span><span></span></div>';
@@ -568,27 +571,39 @@ function budgetBlock(b,s){
 }
 function renderSpend(){
   const t0=today(),ws0=addD(weekStartOf(t0),7*WK),we=addD(ws0,7),last=addD(we,-1);
+  const r0=M.rows[0],hasNow=!!(r0&&(r0.x.pre||r0.x.cur)),until=hasNow?dname(r0.x.e)+' '+md(r0.x.e):'';
+  const trackOn=S.track!==false;
+  let tp='<h2>Shopping until next payday</h2>';
+  if(hasNow){
+    if(r0.done){
+      tp+='<p class="hint pos">Done shopping until '+until+'. The plan isn\'t setting aside anything more for groceries or household before then, so that money counts as Spare.</p><div class="btns"><button type="button" data-done="undo">Undo, I still need to shop</button></div>';
+    }else{
+      const left=r0.food+r0.house+r0.treat;
+      tp+='<div class="line"><span>Planned spending left until '+until+'</span><span>'+m2(left)+'</span></div>';
+      if(left<0.005)tp+='<p class="hint">The plan already isn\'t counting any more shopping before then.</p>';
+      tp+='<div class="btns"><button type="button" class="primary" data-done="set">I\'m done shopping until next payday</button></div>';
+    }
+  }else tp+='<p class="hint">Add your paydays to use this.</p>';
+  tp+='<div class="sub">Plan connection</div><label class="ck"><input type="checkbox" id="trackIn"'+(trackOn?' checked':'')+'> Use my logged purchases in the plan</label>';
+  if(trackOn){
+    if(r0&&r0.x.cur)tp+='<p class="hint">The plan counts what\'s left of this period\'s allowance based on what you log, and whatever you don\'t spend becomes Spare when the next paycheck lands. Log every purchase. If you skip one, Spare will look a little smaller than it really is until then.</p>';
+    else tp+='<p class="hint">This starts once your first listed paycheck lands. Until then, the plan uses "Food and household on hand" on the Paycheck tab.</p>';
+  }else tp+='<p class="hint">Off: the plan assumes you spend your full allowance and uses "Food and household on hand" on the Paycheck tab instead.</p>';
+  $('trackPanel').innerHTML=tp;
+
   const lbl=WK===0?'This week':(WK===-1?'Last week':(WK===1?'Next week':'Week of '+md(ws0)));
   $('wkLabel').innerHTML=lbl+'<div class="hint" style="margin:0;font-weight:400">'+dname(ws0)+' '+md(ws0)+' – '+dname(last)+' '+md(last)+'</div>';
   const wb={Food:M.wk.Food||0,Household:M.wk.Household||0,Treat:M.wk.Treat||0};
-  let h=budgetBlock(wb,catSums(ws0,we));
+  let h='';
+  if(WK===0&&hasNow&&r0.done)h+='<p class="hint pos" style="margin-top:0">Done shopping until '+until+'.</p>';
+  h+=budgetBlock(wb,catSums(ws0,we));
   if(WK!==0)h+='<div class="btns"><button type="button" data-wk="now">Back to this week</button></div>';
   $('wkSummary').innerHTML=h;
   const per=periodFor(WK===0?t0:ws0);
   if(per){
     const pb={Food:wb.Food*2,Household:wb.Household*2,Treat:wb.Treat*2};
     $('periodSummary').innerHTML='<h2>'+(WK===0?'This paycheck period':'Paycheck period')+'</h2><p class="hint">'+dname(per.s)+' '+md(per.s)+' – '+dname(addD(per.e,-1))+' '+md(addD(per.e,-1))+' · two weeks of your spending list</p>'+budgetBlock(pb,catSums(per.s,per.e));
-  }else $('periodSummary').innerHTML='<h2>Paycheck period</h2><p class="hint">Add your paydays to see this.</p>';
-  const trackOn=S.track!==false,cr=M.rows.find(r=>r.x.cur);
-  let tp='<h2>Plan connection</h2><label class="ck"><input type="checkbox" id="trackIn"'+(trackOn?' checked':'')+'> Use my logged purchases in the plan</label>';
-  if(trackOn){
-    if(cr&&cr.trk){
-      tp+='<p class="hint" style="color:var(--text)">The plan is counting '+m2(cr.food+cr.house+cr.treat)+' left to spend this period (until '+dname(cr.x.e)+' '+md(cr.x.e)+'). Whatever you don\'t spend becomes Spare when the next paycheck lands.</p>';
-      tp+=cr.trk.done?'<p class="hint pos">Marked done: what was left this period has moved to Spare.</p><div class="btns"><button type="button" data-done="undo">Undo, I still need to shop</button></div>':'<div class="btns"><button type="button" data-done="set">I\'m done shopping until next payday</button></div>';
-    }else tp+='<p class="hint">This starts once your first listed paycheck lands.</p>';
-    tp+='<p class="hint">Log every purchase. If you skip one, Spare will look a little smaller than it really is until the next paycheck.</p>';
-  }else tp+='<p class="hint">Off: the plan assumes you spend your full allowance and uses "Food and household on hand" on the Paycheck tab instead.</p>';
-  $('trackPanel').innerHTML=tp;
+  }else $('periodSummary').innerHTML='<h2>Paycheck period</h2><p class="hint">This shows up once your first listed paycheck lands.</p>';
   const items=S.purchases.filter(p=>{const d=P(p.d);return d&&d>=ws0&&d<we;}).sort((a,b)=>a.d<b.d?1:(a.d>b.d?-1:0));
   let l='<h2>Purchases '+(WK===0?'this week':'that week')+'</h2>';
   if(!items.length)l+='<p class="hint">Nothing logged yet.</p>';
@@ -597,11 +612,15 @@ function renderSpend(){
     l+='<div class="line" style="align-items:center"><span>'+dname(d)+' '+md(d)+' · '+cat+note+'</span><span style="display:flex;align-items:center;gap:8px;color:var(--text)">'+m2(num(p.a))+'<button type="button" data-del="'+esc(p.id)+'" aria-label="Delete purchase" style="min-height:34px;padding:0 10px">×</button></span></div>';
   });
   $('wkList').innerHTML=l;
-  const cs=weekStartOf(t0),cur=catSums(cs,addD(cs,7));
-  const parts=['Groceries '+m2(wb.Food-cur.Food),'Household '+m2(wb.Household-cur.Household)];
-  if(wb.Treat>0.005)parts.push('Treats '+m2(wb.Treat-cur.Treat));
-  const anyOver=(wb.Food-cur.Food<-0.005)||(wb.Household-cur.Household<-0.005)||(wb.Treat>0.005&&wb.Treat-cur.Treat<-0.005);
-  const mini=$('wkMini');mini.textContent=S.spend.length?'Left this week: '+parts.join(' · '):'';mini.className='hint'+(anyOver?' neg':'');
+  const mini=$('wkMini');
+  if(hasNow&&r0.done){mini.textContent='Done shopping until '+until+'.';mini.className='hint pos';}
+  else{
+    const cs=weekStartOf(t0),cur=catSums(cs,addD(cs,7));
+    const parts=['Groceries '+m2(wb.Food-cur.Food),'Household '+m2(wb.Household-cur.Household)];
+    if(wb.Treat>0.005)parts.push('Treats '+m2(wb.Treat-cur.Treat));
+    const anyOver=(wb.Food-cur.Food<-0.005)||(wb.Household-cur.Household<-0.005)||(wb.Treat>0.005&&wb.Treat-cur.Treat<-0.005);
+    mini.textContent=S.spend.length?'Left this week: '+parts.join(' · '):'';mini.className='hint'+(anyOver?' neg':'');
+  }
 }
 
 function chartSVG(list){
@@ -712,7 +731,7 @@ $('card').addEventListener('change',e=>{if(e.target&&e.target.id==='cSel'){CARD=
 $('plan').addEventListener('click',e=>{const b=e.target.closest('button[data-card]');if(!b)return;CARD=b.dataset.card;recalc();switchTab('pay');});
 $('tab-spend').addEventListener('click',e=>{
   const dn=e.target.closest('[data-done]');
-  if(dn){const cr=M.rows.find(r=>r.x.cur);if(dn.dataset.done==='set'&&cr)S.doneFor=ISO(cr.x.ps);else S.doneFor=null;recalc();return;}
+  if(dn){const r0=M.rows[0];if(dn.dataset.done==='set'&&r0&&(r0.x.pre||r0.x.cur))S.doneFor='until:'+ISO(r0.x.e);else S.doneFor=null;recalc();return;}
   const w=e.target.closest('[data-wk]');
   if(w){WK=w.dataset.wk==='prev'?WK-1:(w.dataset.wk==='next'?WK+1:0);renderSpend();return;}
   const del=e.target.closest('[data-del]');
